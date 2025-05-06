@@ -23,8 +23,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className="dark"> {/* Apply dark mode by default */}
+  return (<html lang="en" className="dark">{/* Apply dark mode by default */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
         {children}
         <Toaster /> {/* Add Toaster component here */}
