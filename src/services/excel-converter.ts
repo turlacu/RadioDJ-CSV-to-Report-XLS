@@ -1,3 +1,4 @@
+
 import * as XLSX from 'xlsx';
 import { format, parse, isValid, getHours, getMinutes, getSeconds } from 'date-fns';
 
@@ -37,6 +38,11 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
   let newHeaders = [...headers];
   const processedDataRows: (string | number | Date | null)[][] = []; // Store processed data
 
+  // Rename "Date/Time Played" to "Date Played"
+  if (dtColIndex !== -1) {
+      newHeaders[dtColIndex] = "Date Played";
+  }
+
   // 3. Insert new "Time Played" column header if "Date/Time Played" exists
   let timeColIndex = -1;
   if (dtColIndex !== -1) {
@@ -65,26 +71,27 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
         for (const fmt of dateFormats) {
           const parsed = parse(dateStr, fmt, new Date());
           if (isValid(parsed)) {
-            datePart = parsed;
-            break;
+            // Check if the parsed year is reasonable (e.g., not 1899 which can happen with just time)
+            if (parsed.getFullYear() > 1900) {
+                datePart = parsed;
+                break;
+            }
           }
         }
         if (datePart === null) {
             // Fallback if no format matched
             console.warn(`Could not parse date string: "${dateStr}". Keeping original.`);
-            datePart = dateStr;
+            datePart = dateStr; // Keep original string if parsing fails
         }
 
         // --- Time Parsing ---
-        // Try common time formats
-        const timeFormats = ['h:mm:ss a', 'hh:mm:ss a', 'H:mm:ss', 'HH:mm:ss'];
-        // Create a dummy date to parse time against
-        const baseDate = new Date(1900, 0, 1); // Use a consistent base date for time parsing
+        // Create a consistent base date for reliable time parsing
+        const baseDateForTimeParsing = new Date(1970, 0, 1); // Use epoch start or similar fixed date
+        const timeFormats = ['h:mm:ss a', 'hh:mm:ss a', 'H:mm:ss', 'HH:mm:ss', 'h:mm a', 'H:mm'];
         for (const fmt of timeFormats) {
-          const parsed = parse(timeStr, fmt, baseDate);
-           // Check if the parsed time is valid *and* different from the base date's start time
-           // This avoids incorrectly parsing '00:00:00' if the base date itself has that time
-          if (isValid(parsed) && parsed.getTime() !== baseDate.getTime()) {
+          // Combine with a known date part to help parsing
+          const parsed = parse(`${format(baseDateForTimeParsing, 'yyyy-MM-dd')} ${timeStr}`, `yyyy-MM-dd ${fmt}`, new Date());
+          if (isValid(parsed)) {
               timePart = parsed;
               break;
           }
@@ -93,7 +100,9 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
             // Handle cases like '0:05:30' which might fail strict parsing
             const [h, m, s] = timeStr.split(':').map(Number);
             if (!isNaN(h) && !isNaN(m) && !isNaN(s)) {
-                const tempDate = new Date(1900, 0, 1, h, m, s);
+                // Use the base date but set the time components
+                const tempDate = new Date(baseDateForTimeParsing);
+                tempDate.setHours(h, m, s, 0);
                 if (isValid(tempDate)) {
                     timePart = tempDate;
                 }
@@ -101,22 +110,30 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
         }
 
         if (timePart === null) {
-          console.warn(`Could not parse time string: "${timeStr}". Keeping original.`);
-          // Keep time part empty or use original string? Decide based on requirement.
-          // Let's keep it empty for consistency if parsing fails.
-          timePart = '';
+          console.warn(`Could not parse time string: "${timeStr}". Setting time column to empty.`);
+          timePart = ''; // Set time column to empty string if parsing fails
         }
 
       } else {
         // Handle cases where there's no space or invalid format
-        console.warn(`Could not split date/time string: "${fullText}". Keeping original.`);
-        datePart = fullText; // Keep original value in date column
-        timePart = '';      // Set time column to empty
+        console.warn(`Could not split date/time string: "${fullText}". Keeping original date, empty time.`);
+        // Attempt to parse the whole string as just a date
+         const dateFormats = ['M/d/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd', 'dd.MM.yyyy', 'd.M.yyyy'];
+         let parsedAsDateOnly : Date | null = null;
+         for (const fmt of dateFormats) {
+            const parsed = parse(fullText, fmt, new Date());
+            if (isValid(parsed) && parsed.getFullYear() > 1900) {
+               parsedAsDateOnly = parsed;
+               break;
+            }
+         }
+         datePart = parsedAsDateOnly || fullText; // Keep original value in date column if parsing fails
+         timePart = '';      // Set time column to empty
       }
 
       // Update the processed row values
-      processedRow[dtColIndex] = datePart; // Update Date/Time column with Date object or original string
-      processedRow.splice(timeColIndex, 0, timePart); // Insert Time object or empty string
+      processedRow[dtColIndex] = datePart; // Update Date Played column
+      processedRow.splice(timeColIndex, 0, timePart); // Insert Time Played value
     }
 
     processedDataRows.push(processedRow);
@@ -131,15 +148,15 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
   const range = XLSX.utils.decode_range(newWs['!ref'] || 'A1:A1');
 
   for (let R = range.s.r + 1; R <= range.e.r; ++R) { // Start from row 1 (data)
-    // Format Date column
+    // Format Date Played column
     if (dtColIndex !== -1) {
       const dateCellRef = XLSX.utils.encode_cell({ r: R, c: dtColIndex });
       const dateCell = newWs[dateCellRef];
       if (dateCell && dateCell.v instanceof Date && isValid(dateCell.v)) {
         // Ensure it's treated as a number (Excel date serial) and apply format
-        dateCell.t = 'n';
+        dateCell.t = 'n'; // Important: Set type to number for date formatting
         dateCell.z = 'm/d/yyyy'; // Or 'yyyy-mm-dd' or other preferred format
-        //xlsx library handles Date object to serial conversion when writing if t='n'
+        // dateCell.v = XLSX.SSF.parse_date_code(format(dateCell.v, 'M/d/yyyy')).v; // Convert Date to Excel serial date
       } else if (dateCell) {
         dateCell.t = 's'; // Ensure it's explicitly string if not a valid date object
       }
@@ -155,15 +172,16 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
             const seconds = getSeconds(timeCell.v);
             // Calculate Excel serial time (fraction of a day)
             const excelTime = (hours * 3600 + minutes * 60 + seconds) / (24 * 60 * 60);
-            timeCell.t = 'n';
+            timeCell.t = 'n'; // Set type to number for time formatting
             timeCell.v = excelTime; // Set the calculated serial time value
             timeCell.z = 'hh:mm:ss'; // Apply time format
+        } else if (timeCell && typeof timeCell.v === 'string' && timeCell.v === '') {
+            // Handle empty string case explicitly if needed
+            timeCell.t = 's';
+            timeCell.v = '';
         } else if (timeCell) {
-            timeCell.t = 's'; // Ensure it's explicitly string if not a valid time object
-             // If it was set to '', make sure value is empty string
-            if (processedDataRows[R - 1][timeColIndex] === '') {
-                timeCell.v = '';
-            }
+             // Fallback for unexpected types or invalid dates that might slip through
+            timeCell.t = 's';
         }
     }
 
@@ -196,11 +214,13 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
            const excelTime = totalSeconds / (24 * 60 * 60);
            durCell.t = 'n';
            durCell.v = excelTime;
-           durCell.z = 'mm:ss'; // Apply duration format (adjust if hours are possible)
+           // Choose format based on whether duration could exceed an hour
+           durCell.z = totalSeconds >= 3600 ? '[h]:mm:ss' : 'mm:ss';
        } else if (durCell && typeof durCell.v === 'number') {
            // If it was already a number (e.g., rawNumbers: true), ensure format
            durCell.t = 'n';
-           durCell.z = 'mm:ss';
+           // Determine format based on the numeric value (fraction of a day)
+           durCell.z = durCell.v * 24 >= 1 ? '[h]:mm:ss' : 'mm:ss';
        }
     }
   }
@@ -208,12 +228,13 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
   // Set column widths (optional but good for readability)
   newWs['!cols'] = newHeaders.map((_, C) => {
     let width = 10; // Default width
-    if (C === dtColIndex) width = 12;
-    if (C === timeColIndex) width = 10;
+    if (C === dtColIndex) width = 12; // Date Played
+    if (C === timeColIndex) width = 10; // Time Played
     if (durColIndex !== -1) {
          const actualDurColIndex = timeColIndex !== -1 && durColIndex >= dtColIndex ? durColIndex + 1 : durColIndex;
-         if (C === actualDurColIndex) width = 8;
+         if (C === actualDurColIndex) width = 8; // Duration
     }
+    // Add widths for other columns if needed
     return { wch: width };
   });
 
@@ -223,7 +244,8 @@ export async function convertCsvToXls(csvData: string): Promise<Buffer> {
   XLSX.utils.book_append_sheet(newWorkbook, newWs, sheetName);
 
   // Write to buffer (XLS format - BIFF8)
-  const xlsBuffer = XLSX.write(newWorkbook, { bookType: 'xls', type: 'buffer', cellDates: false }); // Important: cellDates: false for writing
+  // cellDates: false is needed here so xlsx uses the number/string values we set, not re-interpreting Date objects
+  const xlsBuffer = XLSX.write(newWorkbook, { bookType: 'xls', type: 'buffer', cellDates: false });
 
   return xlsBuffer;
 }
