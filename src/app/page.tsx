@@ -20,11 +20,11 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
       setSelectedFile(file);
-      setDownloadUrl(null); 
-      setDownloadFilename(file.name.replace(/\.csv$/i, '.xls')); 
+      setDownloadUrl(null);
+      setDownloadFilename(file.name.replace(/\.csv$/i, '.xls'));
     } else {
       setSelectedFile(null);
-      event.target.value = '';
+      event.target.value = ''; // Clear the input if the file is invalid
       toast({
         variant: "destructive",
         title: "Invalid File Type",
@@ -82,7 +82,7 @@ export default function Home() {
          });
          setIsLoading(false);
       }
-      reader.readAsText(selectedFile);
+      reader.readAsText(selectedFile); // Read as text for CSV parsing
 
     } catch (error: any) {
       console.error("Error during conversion process:", error);
@@ -113,7 +113,7 @@ export default function Home() {
                  type="file"
                  accept=".csv"
                  onChange={handleFileChange}
-                 className="flex-grow text-center file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                 className="flex-grow text-center file:mx-auto file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" // Centered file button
                />
                <Upload className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -149,7 +149,7 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-      <div className="mt-8 text-center text-sm text-muted-foreground">
+       <div className="mt-8 text-center text-sm text-muted-foreground">
         <p>made by Bogdan Turlacu</p>
       </div>
     </main>
