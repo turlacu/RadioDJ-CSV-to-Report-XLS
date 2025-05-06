@@ -99,7 +99,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background text-foreground">
-      <Card className="w-full max-w-md shadow-lg shadow-[0_0_25px_3px_rgba(0,128,128,0.4)] rounded-xl">
+      <Card className="w-full max-w-md shadow-lg shadow-[0_0_25px_3px_rgba(64,64,64,0.4)] rounded-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">RadioDJ CSV to Report XLS</CardTitle>
           <CardDescription>Upload your CSV file to convert it into XLS format.</CardDescription>
