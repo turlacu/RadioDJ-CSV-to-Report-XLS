@@ -23,6 +23,8 @@ export default function Home() {
       setDownloadFilename(file.name.replace(/\.csv$/i, '.xls')); // Set default download name
     } else {
       setSelectedFile(null);
+      // Clear the input visually if the file is invalid
+      event.target.value = '';
       toast({
         variant: "destructive",
         title: "Invalid File Type",
@@ -95,7 +97,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background text-foreground">
-      <Card className="w-full max-w-md shadow-lg">
+      <Card className="w-full max-w-md shadow-lg rounded-xl"> {/* Added rounded-xl */}
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">CSV to XLS Converter</CardTitle>
           <CardDescription>Upload your CSV file to convert it into XLS format.</CardDescription>
@@ -111,19 +113,21 @@ export default function Home() {
                  type="file"
                  accept=".csv"
                  onChange={handleFileChange}
-                 className="flex-grow file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                 className="flex-grow text-center file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" // Added text-center
                />
                <Upload className="h-5 w-5 text-muted-foreground" />
             </div>
              {selectedFile && (
-                <p className="text-sm text-muted-foreground pt-1">Selected: {selectedFile.name}</p>
+                <p className="text-sm text-muted-foreground pt-1 text-center">{/* Added text-center */}
+                  Selected: {selectedFile.name}
+                </p>
             )}
           </div>
 
           <Button
             onClick={handleConvert}
             disabled={!selectedFile || isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md" // Added rounded-lg and shadow-md
           >
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -136,7 +140,7 @@ export default function Home() {
               <a
                 href={downloadUrl}
                 download={downloadFilename}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md" // Added rounded-lg and shadow-md
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download XLS File
