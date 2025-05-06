@@ -151,9 +151,10 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-       <div className="mt-8 text-center text-xs text-muted-foreground">
+       <div className="mt-8 text-center text-xs text-muted-foreground opacity-70">
         <p>made by Bogdan Turlacu</p>
       </div>
     </main>
   );
 }
+
