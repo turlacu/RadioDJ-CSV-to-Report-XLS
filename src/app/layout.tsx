@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({ // Corrected function name
 });
 
 export const metadata: Metadata = {
-  title: 'CSV to XLS Converter', // Updated App Name
+  title: 'RadioDJ CSV to Report XLS', // Updated App Name
   description: 'Convert CSV files to XLS format easily.', // Updated Description
 };
 
@@ -23,7 +23,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (<html lang="en" className="dark">{/* Apply dark mode by default */}
+  return (
+    <html lang="en" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
         {children}
         <Toaster /> {/* Add Toaster component here */}
