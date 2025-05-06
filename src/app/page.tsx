@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback } from 'react';
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Download, Loader2 } from 'lucide-react';
-import { convertCsvToXls } from '@/services/excel-converter'; // Assuming the service exists
+import { convertCsvToXls } from '@/services/excel-converter';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
@@ -19,11 +20,10 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
       setSelectedFile(file);
-      setDownloadUrl(null); // Reset download link when new file is selected
-      setDownloadFilename(file.name.replace(/\.csv$/i, '.xls')); // Set default download name
+      setDownloadUrl(null); 
+      setDownloadFilename(file.name.replace(/\.csv$/i, '.xls')); 
     } else {
       setSelectedFile(null);
-      // Clear the input visually if the file is invalid
       event.target.value = '';
       toast({
         variant: "destructive",
@@ -82,7 +82,7 @@ export default function Home() {
          });
          setIsLoading(false);
       }
-      reader.readAsText(selectedFile); // Read as text for CSV processing
+      reader.readAsText(selectedFile);
 
     } catch (error: any) {
       console.error("Error during conversion process:", error);
@@ -97,7 +97,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background text-foreground">
-      <Card className="w-full max-w-md shadow-lg rounded-xl"> {/* Added rounded-xl */}
+      <Card className="w-full max-w-md shadow-lg rounded-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">CSV to XLS Converter</CardTitle>
           <CardDescription>Upload your CSV file to convert it into XLS format.</CardDescription>
@@ -113,12 +113,12 @@ export default function Home() {
                  type="file"
                  accept=".csv"
                  onChange={handleFileChange}
-                 className="flex-grow text-center file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" // Added text-center
+                 className="flex-grow text-center file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                />
                <Upload className="h-5 w-5 text-muted-foreground" />
             </div>
              {selectedFile && (
-                <p className="text-sm text-muted-foreground pt-1 text-center">{/* Added text-center */}
+                <p className="text-sm text-muted-foreground pt-1 text-center">
                   Selected: {selectedFile.name}
                 </p>
             )}
@@ -127,7 +127,7 @@ export default function Home() {
           <Button
             onClick={handleConvert}
             disabled={!selectedFile || isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md" // Added rounded-lg and shadow-md
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md"
           >
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -140,7 +140,7 @@ export default function Home() {
               <a
                 href={downloadUrl}
                 download={downloadFilename}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md" // Added rounded-lg and shadow-md
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download XLS File
@@ -149,7 +149,9 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-       {/* Toaster needs to be added in layout.tsx for global access */}
+      <div className="mt-8 text-center text-sm text-muted-foreground">
+        <p>made by Bogdan Turlacu</p>
+      </div>
     </main>
   );
 }
