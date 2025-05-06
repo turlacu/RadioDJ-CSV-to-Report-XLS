@@ -21,7 +21,9 @@ export default function Home() {
     if (file && file.type === 'text/csv') {
       setSelectedFile(file);
       setDownloadUrl(null);
-      setDownloadFilename(file.name.replace(/\.csv$/i, '.xls'));
+      // Attempt to create a safe filename, replace non-alphanumeric with underscore
+      const safeBaseName = file.name.replace(/\.csv$/i, '').replace(/[^a-z0-9]/gi, '_');
+      setDownloadFilename(`${safeBaseName}.xls`);
     } else {
       setSelectedFile(null);
       event.target.value = ''; // Clear the input if the file is invalid
@@ -113,7 +115,7 @@ export default function Home() {
                  type="file"
                  accept=".csv"
                  onChange={handleFileChange}
-                 className="flex-grow text-center file:mx-auto file:py-3 file:px-6 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" // Centered file button with increased padding
+                 className="flex-grow text-center file:mx-auto file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" // Adjusted padding
                />
                <Upload className="h-5 w-5 text-muted-foreground" />
             </div>
